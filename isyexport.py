@@ -64,8 +64,7 @@ def ISYExport(config, serverconfig, destination, output, input, host, temp):
                 curResourceID = 0
                 for id in resource.iter('id'):
                     curResourceID = int(id.text)
-                    if maxResourceID < curResourceID:
-                        maxResourceID = curResourceID
+                    maxResourceID = max(maxResourceID, curResourceID)
                 for name in resource.iter('name'):
                     resources[name.text] = resource
     except:
@@ -84,8 +83,8 @@ def ISYExport(config, serverconfig, destination, output, input, host, temp):
         for commandName, commandData in deviceData['commands'].items():
             if not commandData.get('result'):
                 simpleCommand = True
-                resourceName = deviceName + '.' + commandName
-                command = deviceName + '/' + commandName
+                resourceName = f'{deviceName}.{commandName}'
+                command = f'{deviceName}/{commandName}'
                 if commandData.get('acceptsNumber'):
                     print('Create state variable for', resourceName)
                     resourceID = addResource(configData, resources, resourceTree,
@@ -95,9 +94,13 @@ def ISYExport(config, serverconfig, destination, output, input, host, temp):
 
                 if 'value_set' in commandData:
                     for value in paramParser.value_sets[commandData['value_set']].keys():
-                        resourceID = addResource(configData, resources,
-                                                 resourceTree, resourceName + '/' + value)
-                        commands[resourceID] = command + '/' + value
+                        resourceID = addResource(
+                            configData,
+                            resources,
+                            resourceTree,
+                            f'{resourceName}/{value}',
+                        )
+                        commands[resourceID] = f'{command}/{value}'
                     simpleCommand = False
 
                 if simpleCommand:
@@ -126,8 +129,12 @@ def ISYExport(config, serverconfig, destination, output, input, host, temp):
         # Add RES files to zip
         for resourceID in range(1, curResourceID):
             command = commands.get(resourceID)
-            outputFileName = os.path.join(destination, ISY_CONF_FOLDER,
-                                          ISY_NET_FOLDER, str(resourceID) + '.RES')
+            outputFileName = os.path.join(
+                destination,
+                ISY_CONF_FOLDER,
+                ISY_NET_FOLDER,
+                f'{str(resourceID)}.RES',
+            )
             if command:
                 with open(outputFileName, 'w') as output:
                     output.write(REQUEST.format(DEFAULT_METHOD, command,

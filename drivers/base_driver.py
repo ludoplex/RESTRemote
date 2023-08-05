@@ -63,8 +63,7 @@ class BaseDriver(object):
 
         command = self.config['commands'][commandName]
         if not command.get('result'):
-            raise Exception('Invalid command for ' + __name__ +
-                            ' and method: ' + commandName)
+            raise Exception(f'Invalid command for {__name__} and method: {commandName}')
 
         result = {
             'driver': self.__class__.__name__,
@@ -89,7 +88,7 @@ class BaseDriver(object):
             args = self.paramParser.translate_param(command, str(args))
 
             if command.get('acceptsBool') and type(args) is not bool:
-                args = args == 'true' or args == 'on'
+                args = args in ['true', 'on']
             elif command.get('acceptsNumber'):
                 args = int(args)
             elif command.get('acceptsPct'):

@@ -26,15 +26,11 @@ def name_to_desc(name):
 
 
 def name_to_nls(name):
-    nls = ''.join(name.split('_')).upper()
-
-    return nls
+    return ''.join(name.split('_')).upper()
 
 
 def desc_to_name(desc):
-    name = '_'.join(desc.split(' ')).lower()
-
-    return name
+    return '_'.join(desc.split(' ')).lower()
 
 
 def create_dir(fileName):

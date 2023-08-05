@@ -42,8 +42,7 @@ class Chromecast(BaseDriver):
 
         try:
             if command.get('result', False):
-                result = getattr(attr, command['argKey'], '')
-                return result
+                return getattr(attr, command['argKey'], '')
             elif args is not None:
                 if type(args) == list:
                     attr(*args)
@@ -94,12 +93,13 @@ class Chromecast(BaseDriver):
 
         playlists = param.get(Chromecast.PLAYLISTS_KEY_NAME)
         if playlists is not None:
-            values = []
-            for playlist in playlists:
-                values.append({
+            values = [
+                {
                     'value': playlist['name'],
-                    'param': [playlist['url'], playlist['type']]
-                })
+                    'param': [playlist['url'], playlist['type']],
+                }
+                for playlist in playlists
+            ]
             if config['values'].get(Chromecast.PLAYLISTS_KEY_NAME) != values:
                 config['values'][Chromecast.PLAYLISTS_KEY_NAME] = values
                 config_changed = True
@@ -108,14 +108,10 @@ class Chromecast(BaseDriver):
         if apps is not None:
             values = list(config.get('coreApps', []))
 
-            for app in apps:
-                values.append({
-                    'value': app['name'],
-                    'param': app['app_id']
-                })
-
-            defaultApp = config.get('defaultApp')
-            if defaultApp:
+            values.extend(
+                {'value': app['name'], 'param': app['app_id']} for app in apps
+            )
+            if defaultApp := config.get('defaultApp'):
                 values.append(defaultApp)
 
             if config['values'].get(Chromecast.APPS_KEY_NAME) != values:
@@ -131,7 +127,7 @@ class Chromecast(BaseDriver):
     @ staticmethod
     def discoverDevices(logger):
         if not Chromecast.enabled:
-            logger.debug(f'Chromecast disabled')
+            logger.debug('Chromecast disabled')
             return
 
         casts, browser = pychromecast.get_chromecasts(

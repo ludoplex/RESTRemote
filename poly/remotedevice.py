@@ -43,8 +43,7 @@ class RemoteDevice(Node):
                 'value_set' not in commandData):
                 self.command_list.append(commandName)
 
-        hint = config['poly'].get('hint')
-        if hint:
+        if hint := config['poly'].get('hint'):
             self.hint = hint
 
         self.primaryDevice = primaryDevice
@@ -64,7 +63,7 @@ class RemoteDevice(Node):
             time.sleep(1)
             self.refresh_state()
         except:
-            LOGGER.exception('Error sending command to ' + self.name)
+            LOGGER.exception(f'Error sending command to {self.name}')
 
     def refresh_state(self):
         if self.primaryDevice.connected:

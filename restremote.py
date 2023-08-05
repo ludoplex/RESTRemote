@@ -39,13 +39,10 @@ def get_data(deviceName, commandName, args=None):
 @app.route('/devices', methods=['GET'])
 def get_device_list():
     try:
-        deviceList = []
-        for deviceName, device in devices.items():
-            deviceList.append({
-                'name': deviceName,
-                'is_connected': device.is_connected()
-            })
-
+        deviceList = [
+            {'name': deviceName, 'is_connected': device.is_connected()}
+            for deviceName, device in devices.items()
+        ]
         return json.dumps({
             'devices': deviceList
         })
@@ -69,7 +66,7 @@ def RESTRemote(config, serverconfig, debug):
     drivers = {}
     devicesConfig = configData.get('devices', {})
     for driverName, driverData in configData['drivers'].items():
-        module = importlib.import_module('drivers.' + driverName)
+        module = importlib.import_module(f'drivers.{driverName}')
         driver = getattr(module, driverData.get(
             'moduleName', driverName.capitalize()))
         drivers[driverName] = driver

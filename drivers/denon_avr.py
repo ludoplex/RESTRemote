@@ -79,10 +79,7 @@ class DenonAVR(BaseDriver):
             if output is None:
                 return
 
-            if len(output) > 2:
-                output = output[:2] + '.5'
-            else:
-                output = output + '.0'
+            output = f'{output[:2]}.5' if len(output) > 2 else f'{output}.0'
             output = float(output)
         else:
             output = self.paramParser.translate_param(command,
