@@ -43,8 +43,7 @@ class TivoIP(BaseDriver):
 
             if command.get('response', False):
                 result = self.conn.recv(TivoIP.RECEIVE_BUFFER_SIZE).decode()
-            delay = command.get('delay')
-            if delay:
+            if delay := command.get('delay'):
                 time.sleep(delay)
         except socket.timeout:
             pass

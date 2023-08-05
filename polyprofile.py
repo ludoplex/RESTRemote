@@ -84,24 +84,26 @@ class ProfileFactory(object):
             nodeDesc = driverData.get(
                 'description', utils.name_to_desc(driverName))
             nlsName = utils.name_to_nls(driverName)
-            nlsData = [self.STATUS_NAME.format(
-                nlsName, 'ST', nodeDesc + ' Online')]
+            nlsData = [self.STATUS_NAME.format(nlsName, 'ST', f'{nodeDesc} Online')]
             states = self.write_node_info(polyCommandsData, paramParser,
                                           driverName, nodeDesc, nlsName, driverData,
                                           nlsData)
             ET.SubElement(states, 'st', id='ST', editor='bool')
             # Write sub devices
             for groupName, groupData in driverData.get('commandGroups', {}).items():
-                polyGroupData = self.config['poly']['commandGroups'].get(
-                    groupName)
-                if polyGroupData:
-                    self.write_node_info(polyCommandsData, paramParser,
-                                         driverName + '_' + groupName,
-                                         nodeDesc + ' ' +
-                                         utils.name_to_desc(groupName),
-                                         utils.name_to_nls(
-                                             driverName + polyGroupData.get('nls', groupName)),
-                                         groupData)
+                if polyGroupData := self.config['poly']['commandGroups'].get(
+                    groupName
+                ):
+                    self.write_node_info(
+                        polyCommandsData,
+                        paramParser,
+                        f'{driverName}_{groupName}',
+                        f'{nodeDesc} {utils.name_to_desc(groupName)}',
+                        utils.name_to_nls(
+                            driverName + polyGroupData.get('nls', groupName)
+                        ),
+                        groupData,
+                    )
 
     def write(self):
         has_changed = False
@@ -157,7 +159,7 @@ class ProfileFactory(object):
 
         with open('server.yaml', 'r') as serverInfo:
             serverData = yaml.safe_load(serverInfo)
-        serverData['executable'] += ' --serverConfig ' + config_file_name
+        serverData['executable'] += f' --serverConfig {config_file_name}'
         serverData['credits'][0]['version'] = version
 
         description = ''
@@ -166,16 +168,15 @@ class ProfileFactory(object):
             if driverData.get('experimental', False):
                 description += ' (exp)'
 
-        serverData['description'] += ' Supported: ' + description[2:]
+        serverData['description'] += f' Supported: {description[2:]}'
         with open('server.json', 'w') as serverInfo:
             serverInfo.write(json.dumps(serverData, indent=4))
 
     def write_node_info(self, polyCommandsData, paramParser, nodeName, nodeDesc,
                         nlsName, nodeData, nlsData=[]):
-        assert len(nlsName) <= 16, 'Node NLS name is too long: {}'.format(
-            nlsName)
+        assert len(nlsName) <= 16, f'Node NLS name is too long: {nlsName}'
 
-        self.nlsData.append('# ' + nodeName + ' labels\n')
+        self.nlsData.append(f'# {nodeName}' + ' labels\n')
         self.nlsData.append(self.NODE_NAME.format(nodeName, nodeDesc))
         self.nlsData.append(self.NODE_ICON.format(nodeName,
                                                   nodeData.get('icon', 'GenericCtl')))
@@ -188,14 +189,19 @@ class ProfileFactory(object):
         accepts = ET.SubElement(cmds, 'accepts')
         cmd_list = []
         for commandName, commandData in nodeData['commands'].items():
-            commandKey = nodeName + '_' + commandName
+            commandKey = f'{nodeName}_{commandName}'
             nlsCommand = utils.name_to_nls(commandKey)
             polyData = polyCommandsData.get(commandName, {})
             polyDriverName = polyData.get('driver', {}).get('name')
             if not commandData.get('result'):
-                self.nlsData.append(self.COMMAND_NAME.format(
-                    nlsName + '-' + commandName,
-                    commandData.get('description', utils.name_to_desc(commandName))))
+                self.nlsData.append(
+                    self.COMMAND_NAME.format(
+                        f'{nlsName}-{commandName}',
+                        commandData.get(
+                            'description', utils.name_to_desc(commandName)
+                        ),
+                    )
+                )
                 cmd = ET.SubElement(accepts, 'cmd', id=commandName)
                 param = None
                 if (commandData.get('acceptsNumber') or
@@ -218,7 +224,8 @@ class ProfileFactory(object):
                 if polyDriverName:
                     if param is None:
                         raise RuntimeError(
-                            'Driver configured but command is not configured for parameters: ' + commandName)
+                            f'Driver configured but command is not configured for parameters: {commandName}'
+                        )
                     param.set('init', polyDriverName)
 
             elif commandData.get('readOnly', False) and 'value_set' in commandData:
@@ -235,20 +242,26 @@ class ProfileFactory(object):
                                                                                    utils.name_to_desc(commandName))))
 
         if len(cmd_list) > self.COMMAND_LIST_THRESHOLD:
-            nlsCommand = nlsName + '_C'
+            nlsCommand = f'{nlsName}_C'
             for cmd_index, commandName in enumerate(cmd_list):
-                self.nlsData.append(nlsCommand + '-' + str(cmd_index) +
-                                    ' = ' + commandData.get('description',
-                                                            utils.name_to_desc(commandName)))
-            self.nlsData.append(self.COMMAND_NAME.format(nlsName + '-execute',
-                                                         'Send Command'))
+                self.nlsData.append(
+                    (
+                        f'{nlsCommand}-{str(cmd_index)} = '
+                        + commandData.get(
+                            'description', utils.name_to_desc(commandName)
+                        )
+                    )
+                )
+            self.nlsData.append(
+                self.COMMAND_NAME.format(f'{nlsName}-execute', 'Send Command')
+            )
             cmd = ET.SubElement(accepts, 'cmd', id='execute')
             param = ET.SubElement(cmd, 'p', id='', editor=nlsCommand)
             editor = ET.SubElement(self.editorTree, 'editor', id=nlsCommand)
             range = ET.SubElement(editor, 'range')
             range.set('nls', nlsCommand)
             range.set('uom', '25')
-            range.set('subset', '0-' + str(len(cmd_list) - 1))
+            range.set('subset', f'0-{str(len(cmd_list) - 1)}')
 
         self.nlsData.append('')
         return states
@@ -259,11 +272,15 @@ class ProfileFactory(object):
         for key, value in names.items():
             if key.isdigit():
                 maxIndex += 1
-                self.nlsData.append(nlsCommand + '_I-' + str(key) +
-                                    ' = ' + str(value))
+                self.nlsData.append(f'{nlsCommand}_I-{str(key)} = {str(value)}')
         maxIndex = maxIndex - 1 if maxIndex else 0
-        ET.SubElement(editor, 'range', uom='25',
-                      subset='0-' + str(maxIndex), nls=nlsCommand + '_I')
+        ET.SubElement(
+            editor,
+            'range',
+            uom='25',
+            subset=f'0-{str(maxIndex)}',
+            nls=f'{nlsCommand}_I',
+        )
 
     def get_hash(self, file_name):
         if not os.path.isfile(file_name):

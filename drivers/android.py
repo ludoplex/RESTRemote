@@ -24,26 +24,27 @@ class Android(BaseDriver):
                     self.connected = True
                     return
 
-        raise IOError('Connection to ' + self.connectionDescription +
-            ' failed. If device is accessible, try restarting it')
+        raise IOError(
+            f'Connection to {self.connectionDescription} failed. If device is accessible, try restarting it'
+        )
 
     def sendCommandRaw(self, commandName, command, args=None):
         if not self.connected:
             self.connect()
 
         if commandName == 'start_app':
-            result = subprocess.check_output([self.executable, 'shell', 'am',
-                'start', '-n', args]).decode()
+            return subprocess.check_output(
+                [self.executable, 'shell', 'am', 'start', '-n', args]
+            ).decode()
         elif commandName == 'get_app_list':
-            result = self.getCommandList()
+            return self.getCommandList()
         elif commandName == 'get_current_activity':
-            result = self.getCurrentActivity()
+            return self.getCurrentActivity()
         else:
             code = args if args else self.config['commands'][commandName]['code']
-            result = subprocess.check_output([self.executable, 'shell', 'input',
-                'keyevent', str(code)]).decode()
-
-        return result
+            return subprocess.check_output(
+                [self.executable, 'shell', 'input', 'keyevent', str(code)]
+            ).decode()
 
     def getCurrentActivity(self):
         output = subprocess.check_output([self.executable, 'shell', 'dumpsys',
@@ -52,9 +53,9 @@ class Android(BaseDriver):
             pos = line.find('mFocusedApp')
             if pos > 0:
                 pos = line.find(Android.ACTIVITY_RECORD)
-                if pos > 0:
-                    values = line[pos + len(Android.ACTIVITY_RECORD):].split(' ')
-                    return values[2].split('/')[0]
+            if pos > 0:
+                values = line[pos + len(Android.ACTIVITY_RECORD):].split(' ')
+                return values[2].split('/')[0]
 
         return ''
 

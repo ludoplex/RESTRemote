@@ -53,8 +53,7 @@ class WebOS(BaseDriver):
                     self.clientKey = message['payload']
                     self.saveClientKey()
                 self.connectEvent.set()
-        callback = self.callbacks.get(message['id'])
-        if callback:
+        if callback := self.callbacks.get(message['id']):
             callback['data'] = message
             callback['event'].set()
 
@@ -99,15 +98,17 @@ class WebOS(BaseDriver):
             if 'error' in output:
                 return output
 
-            return self.sendCommandRaw('mute', self.config['commands']['mute'],
-                                       False if output['payload']['mute'] else True)
+            return self.sendCommandRaw(
+                'mute',
+                self.config['commands']['mute'],
+                not output['payload']['mute'],
+            )
 
         if not self.connected:
             try:
                 self.connect()
             except:
-                raise Exception('Driver ' + __name__ +
-                                ' cannot connect to device')
+                raise Exception(f'Driver {__name__} cannot connect to device')
 
         message = {}
         id = str(self.curID)
@@ -115,7 +116,7 @@ class WebOS(BaseDriver):
         if commandName == 'register':
             message['type'] = 'register'
             message['payload'] = command
-            id = 'register' + id
+            id = f'register{id}'
         else:
             message['type'] = 'request'
 
@@ -125,8 +126,9 @@ class WebOS(BaseDriver):
         argData = None
         if args is not None:
             if not argKey:
-                raise Exception('Command in ' + __name__ +
-                                ': ' + commandName + ' isn''t configured for arguments')
+                raise Exception(
+                    f'Command in {__name__}: {commandName} isnt configured for arguments'
+                )
 
             argData = {argKey: args}
 

@@ -37,8 +37,8 @@ class ParamParser(object):
                           use_numeric_key):
         '''Creates forward and reverse lookup maps'''
         value_sets[value_set_key] = forward_set = {}
-        value_sets[value_set_key + '_reverse'] = reverse_set = {}
-        value_sets[value_set_key + '_names'] = name_set = {}
+        value_sets[f'{value_set_key}_reverse'] = reverse_set = {}
+        value_sets[f'{value_set_key}_names'] = name_set = {}
         if value_set_data:
             for numeric_value, item in enumerate(value_set_data):
                 key = str(numeric_value) if use_numeric_key else item['value']
